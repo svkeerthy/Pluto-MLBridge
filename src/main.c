@@ -25,8 +25,8 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
-
 #include <sys/time.h>
+#include <time.h>
 #include <unistd.h>
 
 #ifdef HAVE_CONFIG_H
@@ -163,9 +163,7 @@ float *stepFunction(Action action) {
   return features;
 }
 
-float *resetFunction() {
-  return features;
-}
+float *resetFunction() { return features; }
 
 int main(int argc, char *argv[]) {
   int i;
@@ -666,22 +664,69 @@ warranty; not even for MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.\n\n"
   // printf("ab = %f\n", ab);
   // destroyPipeModelRunner(pmr);
 
-  env_session = createEnvironment();
-  features = malloc(sizeof(float) * 500);
-  for (int i = 0; i < 500; i++) {
+  int n;
+  scanf("%d", &n);
+
+  features = malloc(sizeof(float) * n);
+  for (int i = 0; i < n; i++) {
     features[i] = i;
   }
-  env_setNumFeatures(env_session, 500);
-  env_setStepFunc(env_session, stepFunction);
-  env_setResetFunc(env_session, resetFunction);
-  env_setNextAgent(env_session, "agent");
 
-  ONNXModelRunnerWrapper *omr = createONNXModelRunner(
-      env_session, 1, "agent",
-      "/Pramana/ML_LLVM_Tools/hello-MLBridge/dummy-torch-model-500.onnx");
-  evaluate(omr);
-  destroyEnvironment(env_session);
-  destroyONNXModelRunner(omr);
+  FILE *csv_file = fopen("onnx.csv", "a");
+  if (csv_file == NULL) {
+    perror("Error opening the CSV file");
+    return 1;
+  }
+
+  if (1) {
+    int buffer_size =
+        snprintf(
+            NULL, 0,
+            "/Pramana/ML_LLVM_Tools/ml-llvm-project/onnx_test_dir/dummy-torch-model-%d.onnx",
+            n) +
+        1;
+    char *path = (char *)malloc(buffer_size);
+    snprintf(path, buffer_size,
+             "/Pramana/ML_LLVM_Tools/ml-llvm-project/onnx_test_dir/dummy-torch-model-%d.onnx",
+             n);
+    // printf("Constructed string: %s\n", path);
+
+    // start time
+    env_session = createEnvironment();
+    env_setNumFeatures(env_session, n);
+    env_setStepFunc(env_session, stepFunction);
+    env_setResetFunc(env_session, resetFunction);
+    env_setNextAgent(env_session, "agent");
+
+    clock_t start_time = clock();
+    ONNXModelRunnerWrapper *omr =
+        createONNXModelRunner(env_session, 1, "agent", path);
+    evaluate(omr);
+
+    // end time
+    clock_t end_time = clock();
+    double elapsed_time = ((double)(end_time - start_time));
+    fprintf(csv_file, "%d,%.2f\n", n, elapsed_time);
+
+    destroyEnvironment(env_session);
+    destroyONNXModelRunner(omr);
+  } else {
+    // start time
+    clock_t start_time = clock();
+
+    PipeModelRunnerWrapper *pmr =
+        createPipeModelRunner("/tmp/testp.out", "/tmp/testp.in", 2);
+    populateFloatFeatures(pmr, "tensor", features, n);
+    int ab = evaluateIntFeatures(pmr);
+
+    // end time
+    clock_t end_time = clock();
+    double elapsed_time = ((double)(end_time - start_time));
+    fprintf(csv_file, "%d,%.2f\n", n, elapsed_time);
+
+    destroyPipeModelRunner(pmr);
+  }
+  fclose(csv_file);
 
   pluto_prog_free(prog);
   pluto_options_free(options);
