@@ -48,9 +48,13 @@
 #include "candl/scop.h"
 #include "clan/clan.h"
 
+#include "MLModelRunner/C/ONNXModelRunner.h"
 #include "MLModelRunner/C/PipeModelRunner.h"
 
 PlutoOptions *options;
+
+Environment *env_session;
+float *features;
 
 void usage_message(void) {
   fprintf(stdout, "Usage: polycc <input.c> [options] [-o output]\n");
@@ -151,6 +155,16 @@ static double rtclock() {
   if (stat != 0)
     printf("Error return from gettimeofday: %d", stat);
   return (Tp.tv_sec + Tp.tv_usec * 1.0e-6);
+}
+
+float *stepFunction(Action action) {
+  env_setDone(env_session);
+  printf("Action: %d\n", action);
+  return features;
+}
+
+float *resetFunction() {
+  return features;
 }
 
 int main(int argc, char *argv[]) {
@@ -643,16 +657,31 @@ warranty; not even for MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.\n\n"
     printf("[pluto] All times: %0.6lf %0.6lf %.6lf %.6lf\n", t_d, t_t, t_c,
            t_all - t_c - t_t - t_d);
   }
-  // struct PipeModelRunnerWrapper pmr;
 
-  printf("I am here... \n");
-  PipeModelRunnerWrapper *pmr =
-      createPipeModelRunner("/tmp/test.out", "/tmp/test.in", 2);
-  float a[2] = {1.0, 2.0};
-  populateFloatFeatures(pmr, "tensor", a, 2);
-  float ab = evaluateFloatFeatures(pmr);
-  printf("ab = %f\n", ab);
-  destroyPipeModelRunner(pmr);
+  // PipeModelRunnerWrapper *pmr =
+  //     createPipeModelRunner("/tmp/test.out", "/tmp/test.in", 2);
+  // float a[2] = {1.0, 2.0};
+  // populateFloatFeatures(pmr, "tensor", a, 2);
+  // float ab = evaluateFloatFeatures(pmr);
+  // printf("ab = %f\n", ab);
+  // destroyPipeModelRunner(pmr);
+
+  env_session = createEnvironment();
+  features = malloc(sizeof(float) * 500);
+  for (int i = 0; i < 500; i++) {
+    features[i] = i;
+  }
+  env_setNumFeatures(env_session, 500);
+  env_setStepFunc(env_session, stepFunction);
+  env_setResetFunc(env_session, resetFunction);
+  env_setNextAgent(env_session, "agent");
+
+  ONNXModelRunnerWrapper *omr = createONNXModelRunner(
+      env_session, 1, "agent",
+      "/Pramana/ML_LLVM_Tools/hello-MLBridge/dummy-torch-model-500.onnx");
+  evaluate(omr);
+  destroyEnvironment(env_session);
+  destroyONNXModelRunner(omr);
 
   pluto_prog_free(prog);
   pluto_options_free(options);
