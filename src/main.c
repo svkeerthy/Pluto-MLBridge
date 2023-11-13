@@ -159,7 +159,7 @@ static double rtclock() {
 
 float *stepFunction(Action action) {
   env_setDone(env_session);
-  printf("Action: %d\n", action);
+  // printf("Action: %d\n", action);
   return features;
 }
 
@@ -682,26 +682,27 @@ warranty; not even for MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.\n\n"
     int buffer_size =
         snprintf(
             NULL, 0,
-            "/Pramana/ML_LLVM_Tools/ml-llvm-project/onnx_test_dir/dummy-torch-model-%d.onnx",
+            "/home/cs20btech11024/onnx-test-models/dummy-torch-model-%d.onnx",
             n) +
         1;
     char *path = (char *)malloc(buffer_size);
     snprintf(path, buffer_size,
-             "/Pramana/ML_LLVM_Tools/ml-llvm-project/onnx_test_dir/dummy-torch-model-%d.onnx",
+             "/home/cs20btech11024/onnx-test-models/dummy-torch-model-%d.onnx",
              n);
     // printf("Constructed string: %s\n", path);
 
     // start time
-    env_session = createEnvironment();
-    env_setNumFeatures(env_session, n);
-    env_setStepFunc(env_session, stepFunction);
-    env_setResetFunc(env_session, resetFunction);
-    env_setNextAgent(env_session, "agent");
+    // env_session = createEnvironment();
+    // env_setNumFeatures(env_session, n);
+    // env_setStepFunc(env_session, stepFunction);
+    // env_setResetFunc(env_session, resetFunction);
+    // env_setNextAgent(env_session, "agent");
 
     clock_t start_time = clock();
-    ONNXModelRunnerWrapper *omr =
-        createONNXModelRunner(env_session, 1, "agent", path);
-    evaluate(omr);
+    // ONNXModelRunner *omr =
+    //     createONNXModelRunner(env_session, 1, "agent", path);
+    ONNXModelRunner* omr = createSingleAgentOMR(path);
+    int action = singleAgentEvaluate(omr, features, n);
 
     // end time
     clock_t end_time = clock();
@@ -718,7 +719,7 @@ warranty; not even for MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.\n\n"
         createPipeModelRunner("/tmp/testp.out", "/tmp/testp.in", 2);
     populateFloatFeatures(pmr, "tensor", features, n);
     int ab = evaluateIntFeatures(pmr);
-
+    printf("action: %d", ab);
     // end time
     clock_t end_time = clock();
     double elapsed_time = ((double)(end_time - start_time));
