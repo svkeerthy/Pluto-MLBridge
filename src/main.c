@@ -682,12 +682,12 @@ warranty; not even for MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.\n\n"
     int buffer_size =
         snprintf(
             NULL, 0,
-            "/home/cs20btech11024/onnx-test-models/dummy-torch-model-%d.onnx",
+            "/Pramana/ML_LLVM_Tools/hello-MLBridge/dummy-torch-model-%d.onnx",
             n) +
         1;
     char *path = (char *)malloc(buffer_size);
     snprintf(path, buffer_size,
-             "/home/cs20btech11024/onnx-test-models/dummy-torch-model-%d.onnx",
+             "/Pramana/ML_LLVM_Tools/hello-MLBridge/dummy-torch-model-%d.onnx",
              n);
     // printf("Constructed string: %s\n", path);
 
