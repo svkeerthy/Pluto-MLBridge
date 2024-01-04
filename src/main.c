@@ -714,16 +714,17 @@ warranty; not even for MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.\n\n"
     destroyONNXModelRunner(omr);
     fclose(csv_file);
   } else {
-    printf("In pipe flow\n");
+    // printf("In pipe flow\n");
     FILE* csv_file;
     if (config == 1) {
+      // printf("In pipe json flow\n");
       csv_file = fopen("pipe-json.csv", "a");
       if (csv_file == NULL) {
         perror("Error opening the CSV file");
         return 1;
       }
-    } else {
-      printf("In pipe bitstream flow\n");
+    } else if(config == 2) {
+      // printf("In pipe bitstream flow\n");
       csv_file = fopen("pipe-bitstream.csv", "a");
       if (csv_file == NULL) {
         perror("Error opening the CSV file");
@@ -733,15 +734,15 @@ warranty; not even for MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.\n\n"
     // start time
     clock_t start_time = clock();
 
-    printf("Came before pipe model runner\n");
+    // printf("Came before pipe model runner\n");
     PipeModelRunnerWrapper *pmr =
-        createPipeModelRunner("/tmp/testp.out", "/tmp/testp.in", config);
-    printf("Came after pipe model runner\n");
+        createPipeModelRunner("/tmp/plutopipe.out", "/tmp/plutopipe.in", config);
+    // printf("Came after pipe model runner\n");
     populateFloatFeatures(pmr, "tensor", features, n);
-    printf("Came after populate\n");
-    printf("config = %d\n", config);
+    // printf("Came after populate\n");
+    // printf("config = %d\n", config);
     int ab = evaluateIntFeatures(pmr);
-    printf("action: %d", ab);
+    printf("action: %d\n", ab);
     // end time
     clock_t end_time = clock();
     double elapsed_time = ((double)(end_time - start_time));
