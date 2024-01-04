@@ -664,21 +664,22 @@ warranty; not even for MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.\n\n"
   // printf("ab = %f\n", ab);
   // destroyPipeModelRunner(pmr);
 
-  int n;
-  scanf("%d", &n);
+  int n,config;
+  scanf("%d %d", &n,&config);
 
   features = malloc(sizeof(float) * n);
   for (int i = 0; i < n; i++) {
     features[i] = i;
   }
 
-  FILE *csv_file = fopen("onnx.csv", "a");
-  if (csv_file == NULL) {
-    perror("Error opening the CSV file");
-    return 1;
-  }
 
-  if (1) {
+
+  if (config == 0) {
+    FILE *csv_file = fopen("onnx.csv", "a");
+    if (csv_file == NULL) {
+      perror("Error opening the CSV file");
+      return 1;
+    }
     int buffer_size =
         snprintf(
             NULL, 0,
@@ -711,13 +712,34 @@ warranty; not even for MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.\n\n"
 
     destroyEnvironment(env_session);
     destroyONNXModelRunner(omr);
+    fclose(csv_file);
   } else {
+    printf("In pipe flow\n");
+    FILE* csv_file;
+    if (config == 1) {
+      csv_file = fopen("pipe-json.csv", "a");
+      if (csv_file == NULL) {
+        perror("Error opening the CSV file");
+        return 1;
+      }
+    } else {
+      printf("In pipe bitstream flow\n");
+      csv_file = fopen("pipe-bitstream.csv", "a");
+      if (csv_file == NULL) {
+        perror("Error opening the CSV file");
+        return 1;
+      }
+    }
     // start time
     clock_t start_time = clock();
 
+    printf("Came before pipe model runner\n");
     PipeModelRunnerWrapper *pmr =
-        createPipeModelRunner("/tmp/testp.out", "/tmp/testp.in", 2);
+        createPipeModelRunner("/tmp/testp.out", "/tmp/testp.in", config);
+    printf("Came after pipe model runner\n");
     populateFloatFeatures(pmr, "tensor", features, n);
+    printf("Came after populate\n");
+    printf("config = %d\n", config);
     int ab = evaluateIntFeatures(pmr);
     printf("action: %d", ab);
     // end time
@@ -726,8 +748,8 @@ warranty; not even for MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.\n\n"
     fprintf(csv_file, "%d,%.2f\n", n, elapsed_time);
 
     destroyPipeModelRunner(pmr);
+    fclose(csv_file);
   }
-  fclose(csv_file);
 
   pluto_prog_free(prog);
   pluto_options_free(options);
